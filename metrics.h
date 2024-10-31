@@ -9,26 +9,7 @@
 #ifndef _METRICS_H_
 #define _METRICS_H_
 
-/*************************************************
-* Enable fixed counters if they are available,
-* set to 0 otherwise.
-* PMU version 2 and above generally have fixed
-* counters. This information can be obtained from
-* CPUID instruction 0xAH leaf. See table 19-2 in
-* the Intel Developer's Manual Vol. 3B, or refer
-* to the description in perf_events.h.
-**************************************************/
-#define FIXED_CTRS_ENBL		1
-
-
 #include "perf_events.h"
-
-/***********************************************************
-* Flag to enable collection of hardware metrics.
-* Make sure the setup script has been run successfully
-* before enabling this flag.
-***********************************************************/
-#define _COLLECT_PMU_METRICS_ 1
 
 class Metrics {
     public:
@@ -43,9 +24,9 @@ class Metrics {
 
 	int n; // number of metrics being measured
     unsigned long *metrics;
-    std::string *names;
-    static unsigned long *pmu_ids;
-    static unsigned long *event_ids;
+    unsigned long *pmu_ids;
+    unsigned long *event_ids;
+    std::vector<std::string> names;
 };
 
 /***********************************************************
@@ -61,7 +42,7 @@ unsigned long getTimeDiff(struct timespec, struct  timespec);
 
 <...code...>
 
-Metrics m;
+Metrics m = Metrics({<...event names...>});
 getMetricsStart(m);
 <...
 code snippet to monitor

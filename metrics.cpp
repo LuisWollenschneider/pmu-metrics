@@ -1,12 +1,13 @@
 #include "metrics.h"
 
 unsigned long _rdpmc(unsigned long pmc_id) {
-#if _COLLECT_PMU_METRICS_
+#if defined(__i386__) || defined(__x86_64__)
     unsigned long a, d;
     __asm__ __volatile__("rdpmc" : "=a" (a), "=d" (d) : "c" (pmc_id));
     return ((unsigned long)a) | (((unsigned long)d) << 32);
 #else
-    return 0;
+    std::cerr << "rdpmc not supported on this architecture" << std::endl;
+    exit(1);
 #endif
 }
 
@@ -28,14 +29,12 @@ unsigned long getMetricFromName(std::string event_name) {
     exit(1);
 }
 
-
-unsigned long * Metrics::pmu_ids = NULL;
-unsigned long * Metrics::event_ids = NULL;
-
 bool metrics_in_use = false;
 
 Metrics::Metrics(std::vector<std::string> event_names) {
-    if (event_names.size() > 8) {
+    n = event_names.size();
+
+    if (n > 8) {
         std::cerr << "Number of events exceeds the maximum limit of 8" << std::endl;
         exit(1);
     }
@@ -47,31 +46,30 @@ Metrics::Metrics(std::vector<std::string> event_names) {
 
     metrics_in_use = true;
 
-    n = event_names.size();
-    metrics = (unsigned long*)malloc(sizeof(unsigned long)*n);
-    names = (std::string*)malloc(sizeof(std::string)*n);
-
+    // Initialize names
+    names = event_names;
+    // Initialize metrics
+    metrics = (unsigned long*)malloc(sizeof(unsigned long) * n);
     // Initialize PMU ids
-    pmu_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
-    int idx = 0;
-    for (int i=0; i<event_names.size(); i++,idx++) {
-        pmu_ids[idx] = i;
-    }
-
+    pmu_ids = (unsigned long*)malloc(sizeof(unsigned long) * n);
     // Initialize Event IDs
-    event_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
-    idx = 0;
+    event_ids = (unsigned long*)malloc(sizeof(unsigned long) * n);
 
-    for (int i=0; i<event_names.size(); i++) {
-        event_ids[idx++] = getMetricFromName(event_names[i]);
-        names[i] = event_names[i];
+
+    for (int i=0; i < n; i++) {
+        pmu_ids[i] = i;
+        event_ids[i] = getMetricFromName(event_names[i]);
     }
 }
 
 Metrics::~Metrics() {
     free(metrics);
-    free(names);
+    metrics = NULL;
+    free(event_ids);
+    event_ids = NULL;
     free(pmu_ids);
+    pmu_ids = NULL;
+
     metrics_in_use = false;
 }
 
@@ -93,8 +91,9 @@ void getMetricsEnd(Metrics &m) {
 void printMetrics(Metrics &m) { 
     unsigned long event_id;
     std::string event_name;
+
     std::cout << "Total time elapsed (ns): " << m.timeElapsedns << std::endl;
-    std::cout << "--" << std::endl;
+    std::cout << "------" << std::endl;
     std::cout
         << std::left << std::setw(40) << "Performance Event"
         << std::left << std::setw(25) << "Count"
@@ -107,4 +106,5 @@ void printMetrics(Metrics &m) {
             << std::left << std::setw(25) << m.metrics[i]
             << std::endl;
     }
+    std::cout << "------" << std::endl;
 }
