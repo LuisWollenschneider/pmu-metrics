@@ -15,11 +15,6 @@ echo 2 > _rdpmc.txt
 cp _rdpmc.txt /sys/devices/cpu/rdpmc
 rm _rdpmc.txt
 
-# Get headers from config file
-while read -r def var val; do
-    printf -v $var "$val"
-done < <(gcc -E -dM config.h | grep -E '^#define[ \t]+[a-zA-Z_][0-9a-zA-Z_]+')
-
 # Install required libraries
 apt update
 apt install cpuid msr-tools

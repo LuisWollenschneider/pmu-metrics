@@ -13,19 +13,9 @@ skylake
 ```
 For instance, the Intel Xeon Silver 4114 CPU belongs to the skylake microarchitecture family.
 
-2. Choose performance events from file `perf_events.h` and set the `PERFEVTSELx` headers in file `config.h`. Events starting with prefix `ARCH_` work on all Intel microarchitectures, whereas architecture-specific events start with the approrpiate prefix:
-```
-#define PERFEVTSEL0	ARCH_LLC_MISS
-#define PERFEVTSEL1	SKL_KBL_L2_MISS
-#define PERFEVTSEL2	SKL_KBL_L2_REFS
-```
-Above we have chosen to track last-level cache (typically L3) misses which is an architectural performance event, and L2 misses and L1 misses (L2 references) for the skylake and kaby lake microarchitectures.
+2. Choose performance events from file `perf_events.h`.
 
-After choosing performance events, set the header `N_PERFEVTSEL_MSR` to number of events being counted:
-```
-#define N_PERFEVTSEL_MSR 3
-```
-You can track events up to the available number of PERFEVTSEL registers provided by your CPU (typically 4, but can be 8 in some cases).
+Use the name in the format `"ARCHITECTURE.EVENT_NAME"` to specify the performance event when initializing the `Metrics` object.
 
 3. Run the `setup.sh` script to program the PMU on the chosen CPU core
 ```
