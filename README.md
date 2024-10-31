@@ -1,3 +1,5 @@
+Fork from [UWHustle/pmu-metrics](https://github.com/UWHustle/pmu-metrics)
+
 # Fine-grained Hardware Metrics using Intel's PMU
 
 Intel's Performance Monitoring Unit (PMU) is a convenient way to obtain hardware metrics such as cache misses, core cycles, TLB misses, etc. in a lightweight non-intrusive manner. A useful application of PMU metrics is when one wants to benchmark a subsection of code, which is difficult to do with existing tools such as linux_perf, Vtune, etc.
@@ -33,30 +35,36 @@ $ sudo ./setup.sh -c 1
 
 ## Usage
 
+Initialize the `Metrics` object with the performance events you want to track.
+
+Format: `"ARCHITECTURE.EVENT_NAME"`
+
 Wrap the code you want to benchmark with the helper functions `getMetricsStart`, `getMetricsEnd`, and optionally, `printMetrics`. Here is an example:
-```
+```cpp
+#include <cstdlib>
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
 #include "metrics.h"
 
-#define N 10000000 // 10^7
+#define N 10000000 // 10M
 
 using namespace std;
 
 int main() {
-	Metrics m;
-
-	/* Initialize the vector with random numbers */
 	vector<int> vect(N);
+
+	Metrics m = Metrics({"SKYLAKE.UOPS_RETIRED.MACRO_FUSED"});
+
+	// Initialize the array with random numbers
 	for (int i=0; i<N; i++) {
 		vect[i] = rand();
 	}
 
+	// Sort the elements, measure metrics
 	getMetricsStart(m);
-	/******** Code to benchmark ********/
 	sort(vect.begin(), vect.end());
-	/***********************************/
 	getMetricsEnd(m);
 	printMetrics(m);
 
@@ -72,15 +80,13 @@ $ taskset -c 1 ./benchmark.out
 The program yields the following metrics:
 ```
 $ taskset -c 1 ./benchmark.out
-Performance Event            Count
-Instructions Retired         24400763236
-Core Cycles                  14213176160
-TSC Reference Cycles         11386341560
-LLC (L3) Misses              2524985
-L2 Misses                    5542342
-L1 Misses (L2 References)    9631636
+Total time elapsed (ns): 7348051209
+--
+Performance Event                       Count                    
+SKYLAKE.UOPS_RETIRED.MACRO_FUSED        3722016
 ```
 
 ## Extending the Library
 
-More performance events can readily be added to the library by declaring them in the file `perf_events.h`. You will need to obtain the eventID and unit mask of the performance event from Chapter 19 of the [Intel Developer's Manual Vol. 3](https://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-system-programming-manual-325384.html).
+More performance events can readily be added to the library by adding them in the file `perf_events.h` to the `event_names_map` array.
+You will need to obtain the eventID and unit mask of the performance event from Chapter 19 of the [Intel Developer's Manual Vol. 3](https://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-system-programming-manual-325384.html).

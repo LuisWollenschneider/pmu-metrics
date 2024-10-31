@@ -19,7 +19,7 @@
 * the Intel Developer's Manual Vol. 3B, or refer
 * to the description in perf_events.h.
 **************************************************/
-#define FIXED_CTRS_ENBL		1
+#define FIXED_CTRS_ENBL		0
 
 /**********************************************
 * Number of programmable PERFEVTSEL MSRs to use.

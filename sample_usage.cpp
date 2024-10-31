@@ -18,7 +18,8 @@ using namespace std;
 
 int main() {
 	vector<int> vect(N);
-	Metrics m;
+
+	Metrics m = Metrics({"SKYLAKE.UOPS_RETIRED.MACRO_FUSED"});
 
 	// Initialize the array with random numbers
 	for (int i=0; i<N; i++) {
@@ -30,5 +31,6 @@ int main() {
 	sort(vect.begin(), vect.end());
 	getMetricsEnd(m);
 	printMetrics(m);
+
 	return 0;
 }

@@ -1,8 +1,5 @@
 #include "metrics.h"
 
-// // Populated in perf_events.h
-// std::map<int, std::string> event_names;
-
 unsigned long _rdpmc(unsigned long pmc_id) {
 #if _COLLECT_PMU_METRICS_
     unsigned long a, d;
@@ -19,73 +16,74 @@ unsigned long getTimeDiff(struct timespec start_time, struct timespec end_time) 
     return 0;
 }
 
+
+unsigned long getMetricFromName(std::string event_name) {
+    for (int i=0; i<num_events; i++) {
+        if (std::get<1>(event_names_map[i]) == event_name) {
+            return std::get<0>(event_names_map[i]);
+        }
+    }
+
+    std::cerr << "Event name '" << event_name << "' not found" << std::endl;
+    exit(1);
+}
+
+
 unsigned long * Metrics::pmu_ids = NULL;
 unsigned long * Metrics::event_ids = NULL;
 
-std::map<unsigned long, std::string> event_names_map_copy(event_names_map, event_names_map + num_events);
+bool metrics_in_use = false;
 
-Metrics::Metrics() {
-    n =  3 * FIXED_CTRS_ENBL + N_PERFEVTSEL_MSR;
-    metrics = (unsigned long*)malloc(sizeof(unsigned long)*n);
-    if (!pmu_ids) {
-        // Initialize PMU ids
-        pmu_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
-        int idx = 0;
-        if (FIXED_CTRS_ENBL) {
-            pmu_ids[0] = (1<<30);
-            pmu_ids[1] = (1<<30) + 1;
-            pmu_ids[2] = (1<<30) + 2;
-            idx = 3;
-        }
-        for (int i=0; i<N_PERFEVTSEL_MSR; i++,idx++) {
-            pmu_ids[idx] = i;
-        }
-
-        // Initialize Event IDs
-        event_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
-        idx = 0;
-        if (FIXED_CTRS_ENBL) {
-            event_ids[0] = ARCH_INST_RETD;
-            event_ids[1] = ARCH_CORE_CYCLES;
-            event_ids[2] = ARCH_TSC_REF_CYCLES;
-            idx = 3;
-        }
-#if PERFEVTSEL0
-        event_ids[idx++] = PERFEVTSEL0;
-#endif
-#if PERFEVTSEL1
-        event_ids[idx++] = PERFEVTSEL1;
-#endif
-#if PERFEVTSEL2
-        event_ids[idx++] = PERFEVTSEL2;
-#endif
-#if PERFEVTSEL3
-        event_ids[idx++] = PERFEVTSEL3;
-#endif
-#if PERFEVTSEL4
-        event_ids[idx++] = PERFEVTSEL4;
-#endif
-#if PERFEVTSEL5
-        event_ids[idx++] = PERFEVTSEL5;
-#endif
-#if PERFEVTSEL6
-        event_ids[idx++] = PERFEVTSEL6;
-#endif
-#if PERFEVTSEL7
-        event_ids[idx++] = PERFEVTSEL7;
-#endif
+Metrics::Metrics(std::vector<std::string> event_names) {
+    if (event_names.size() > 8) {
+        std::cerr << "Number of events exceeds the maximum limit of 8" << std::endl;
+        exit(1);
     }
+
+    if (metrics_in_use) {
+        std::cerr << "Only one instance of Metrics can be used at a time" << std::endl;
+        exit(1);
+    }
+
+    metrics_in_use = true;
+
+    n = event_names.size();
+    metrics = (unsigned long*)malloc(sizeof(unsigned long)*n);
+    names = (std::string*)malloc(sizeof(std::string)*n);
+
+    // Initialize PMU ids
+    pmu_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
+    int idx = 0;
+    for (int i=0; i<event_names.size(); i++,idx++) {
+        pmu_ids[idx] = i;
+    }
+
+    // Initialize Event IDs
+    event_ids = (unsigned long*)malloc(sizeof(unsigned long)*n);
+    idx = 0;
+
+    for (int i=0; i<event_names.size(); i++) {
+        event_ids[idx++] = getMetricFromName(event_names[i]);
+        names[i] = event_names[i];
+    }
+}
+
+Metrics::~Metrics() {
+    free(metrics);
+    free(names);
+    free(pmu_ids);
+    metrics_in_use = false;
 }
 
 void getMetricsStart(Metrics &m) {
     clock_gettime(CLOCK_MONOTONIC, &m.startTime);
-    for (int i=0; i<m.n; i++) {
+    for (int i=0; i < m.n; i++) {
         m.metrics[i] = _rdpmc(m.pmu_ids[i]);
     }
 }
 
 void getMetricsEnd(Metrics &m) {
-    for (int i=0; i<m.n; i++) {
+    for (int i=0; i < m.n; i++) {
         m.metrics[i] = _rdpmc(m.pmu_ids[i]) - m.metrics[i];
     }
     clock_gettime(CLOCK_MONOTONIC, &m.endTime);
@@ -95,28 +93,18 @@ void getMetricsEnd(Metrics &m) {
 void printMetrics(Metrics &m) { 
     unsigned long event_id;
     std::string event_name;
-    std::cout << "Total time elapsed (ns): "
-        << m.timeElapsedns
-        << std::endl;
+    std::cout << "Total time elapsed (ns): " << m.timeElapsedns << std::endl;
     std::cout << "--" << std::endl;
     std::cout
-        << std::left
-        << std::setw(40)
-        << "Performance Event"
-        << std::left
-        << std::setw(25)
-        << "Count"
+        << std::left << std::setw(40) << "Performance Event"
+        << std::left << std::setw(25) << "Count"
         << std::endl;
-    for (int i=0; i<m.n; i++) {
+    for (int i=0; i < m.n; i++) {
         event_id = m.event_ids[i];
-        event_name = event_names_map_copy[event_id];
-        std::cout
-            << std::left
-            << std::setw(40)
-            << event_name
-            << std::left
-            << std::setw(25)
-            << m.metrics[i]
+        event_name = m.names[i];
+        std::cout 
+            << std::left << std::setw(40)<< event_name
+            << std::left << std::setw(25) << m.metrics[i]
             << std::endl;
     }
 }
