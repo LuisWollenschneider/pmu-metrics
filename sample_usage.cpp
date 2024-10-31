@@ -12,11 +12,11 @@ node:~> taskset -c 1 ./benchmark.out
 
 #include "metrics.h"
 
-#define N 10000000 // 10M
+#define N 1000000 // 10M
 
 using namespace std;
 
-int main() {
+void runTest() {
 	vector<int> vect(N);
 
 	Metrics m = Metrics({"SKYLAKE.UOPS_RETIRED.MACRO_FUSED"});
@@ -31,6 +31,15 @@ int main() {
 	sort(vect.begin(), vect.end());
 	getMetricsEnd(m);
 	printMetrics(m);
+}
+
+int main() {
+	std::cout << "[*] Running sort on " << N << " *RANDOM* elements" << std::endl;
+	runTest();
+
+	std::cout << "[*] Running sort on " << N << " *STATIC* elements" << std::endl;
+	std::srand(0);
+	runTest();
 
 	return 0;
 }
