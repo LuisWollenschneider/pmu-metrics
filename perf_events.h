@@ -16,11 +16,11 @@
 
 #include "perf_events.h"
 
-typedef std::tuple<unsigned long, std::string, std::string> event_name_tuple_t;
+typedef std::tuple<unsigned long, std::string> event_name_tuple_t;
 
 /*
  * Map of event IDs to event names.
- * (event_id, event_name, event_description)
+ * (event_id, event_name)
  * 
  * event_id: (EventSel << 8) | Umask
  * event_name format: "ARCHITECTURE.EVENT_NAME"
@@ -29,8 +29,9 @@ typedef std::tuple<unsigned long, std::string, std::string> event_name_tuple_t;
  * https://perfmon-events.intel.com/
  */
 const event_name_tuple_t event_names_map[] = {
-	event_name_tuple_t(0xC204, "SKYLAKE.UOPS_RETIRED.MACRO_FUSED", "Uops Retired: Macro-fused"),
-	event_name_tuple_t(0xC202, "SKYLAKE.UOPS_RETIRED.RETIRE_SLOTS", "Uops Retired: Retire Slots"),
+	event_name_tuple_t(0xC204, "SKYLAKE.UOPS_RETIRED.MACRO_FUSED"),
+	event_name_tuple_t(0xC202, "SKYLAKE.UOPS_RETIRED.RETIRE_SLOTS"),
+	event_name_tuple_t(0xD101, "SKYLAKE.MEM_LOAD_RETIRED.L1_HIT"),
 };
 
 const int num_events = sizeof(event_names_map) / sizeof(event_name_tuple_t);

@@ -89,8 +89,6 @@ void getMetricsEnd(Metrics &m) {
 }
 
 void printMetrics(Metrics &m) { 
-    std::string event_name;
-
     std::cout << "Total time elapsed (ns): " << m.timeElapsedns << std::endl;
     std::cout << "------" << std::endl;
     std::cout
@@ -98,9 +96,8 @@ void printMetrics(Metrics &m) {
         << std::left << std::setw(25) << "Count"
         << std::endl;
     for (int i=0; i < m.n; i++) {
-        event_name = m.names[i];
         std::cout 
-            << std::left << std::setw(40)<< event_name
+            << std::left << std::setw(40)<< m.names[i]
             << std::left << std::setw(25) << m.metrics[i]
             << std::endl;
     }

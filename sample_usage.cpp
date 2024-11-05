@@ -12,7 +12,7 @@ node:~> taskset -c 1 ./benchmark.out
 
 #include "metrics.h"
 
-#define N 1000000 // 10M
+#define N 1000000 // 1M
 
 using namespace std;
 
