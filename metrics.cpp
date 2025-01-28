@@ -44,6 +44,8 @@ Metrics::Metrics(std::vector<std::string> event_names) {
         exit(1);
     }
 
+    int cpu_core = 1;
+
     metrics_in_use = true;
 
     // Initialize names
@@ -55,11 +57,49 @@ Metrics::Metrics(std::vector<std::string> event_names) {
     // Initialize Event IDs
     event_ids = (unsigned long*)malloc(sizeof(unsigned long) * n);
 
+    std::cout << "Initializing metrics" << std::endl;
+
+    std::string command = "";
+
+    if (n > 5) {
+        // wrmsr -p ${CORE} 0x38f 0x7000000ff
+
+        command.clear();
+        command.append("wrmsr -p " + std::to_string(cpu_core) + " 0x38f 0x7000000ff");
+
+        system(command.c_str());
+    } else {
+        // wrmsr -p ${CORE} 0x38f 0x70000000f
+        command.clear();
+        command.append("wrmsr -p " + std::to_string(cpu_core) + " 0x38f 0x70000000f");
+
+        system(command.c_str());
+    }
+
+    std::cout << "Setting up metrics" << std::endl;
+
+    if (false) {
+        // wrmsr -p ${CORE} 0x38d 0x333
+        command.clear();
+        command.append("wrmsr -p " + std::to_string(cpu_core) + " 0x38d 0x333");
+        system(command.c_str());
+    }
+
+    std::cout << "Setting up metrics" << std::endl;
 
     for (int i=0; i < n; i++) {
         pmu_ids[i] = i;
         event_ids[i] = getMetricFromName(event_names[i]);
+
+        // wrmsr -p ${CORE} 0x186 ${PERFEVTSEL0_MASK}
+        command.clear();
+        command.append("wrmsr -p " + std::to_string(cpu_core) + " " + std::to_string(0x186 + i) + " " + std::to_string(0x430000 + event_ids[i]));
+        // std::string command = "wrmsr -p 1 " + std::to_string(0x186 + i) + " " + std::to_string(event_ids[i]);
+        std::cout << command << std::endl;
+        system(command.c_str());
     }
+
+    std::cout << "Metrics initialized" << std::endl;
 }
 
 Metrics::~Metrics() {
