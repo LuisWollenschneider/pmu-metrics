@@ -1,15 +1,5 @@
 #!/bin/bash
 
-# The core to program (option -c)
-# By default we program core 1
-CORE=1
-while getopts c: flag
-do
-	case "${flag}" in
-		c) CORE=${OPTARG};;
-	esac
-done
-
 # Enable rdpmc instruction at user-level
 echo 2 > _rdpmc.txt
 cp _rdpmc.txt /sys/devices/cpu/rdpmc
@@ -20,6 +10,21 @@ apt update
 apt install cpuid msr-tools
 modprobe msr
 
+exit 0
+
+# IMPORTANT: The following code has been moved into metrics.cpp and is executed at dynamically at runtime
+# It should no longer be necessary to run this part of the setup script
+
+# The core to program (option -c)
+# By default we program core 1
+CORE=1
+while getopts c: flag
+do
+	case "${flag}" in
+		c) CORE=${OPTARG};;
+	esac
+done
+
 # Enable all PMU units by setting IA32_PERF_GLOBAL_CTRL register (0x38f)
 if [ ${PERFEVTSEL5} ]
 then
@@ -29,7 +34,7 @@ else
 fi
 
 # Enable fixed counters if the flag has been set
-if [ $FIXED_CTRS_ENBL -gt 0 ]
+if [[ $FIXED_CTRS_ENBL -gt 0 ]]
 then
 	# Enable fixed counters by setting IA32_FIXED_CTR_CTRL register (0x38d)
 	wrmsr -p ${CORE} 0x38d 0x333
@@ -42,6 +47,7 @@ if [ ${PERFEVTSEL0} ]
 then
 	PERFEVTSEL0_MASK=`printf "0x%X\n" $((0x430000 + ${!PERFEVTSEL0}))`
 	wrmsr -p ${CORE} 0x186 ${PERFEVTSEL0_MASK}
+	echo "wrmsr -p ${CORE} 0x186 ${PERFEVTSEL0_MASK}"
 fi
 
 # Set register IA32_PERFEVTSEL1 (0x187)
@@ -77,6 +83,7 @@ if [ ${PERFEVTSEL5} ]
 then
 	PERFEVTSEL5_MASK=`printf "0x%X\n" $((0x430000 + ${!PERFEVTSEL5}))`
 	wrmsr -p ${CORE} 0x18B ${PERFEVTSEL5_MASK}
+	echo "wrmsr -p ${CORE} 0x18B ${PERFEVTSEL5_MASK}"
 fi
 
 # Set register IA32_PERFEVTSEL6 (0x18C)

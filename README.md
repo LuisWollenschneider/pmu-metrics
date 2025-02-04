@@ -1,8 +1,14 @@
-Fork from [UWHustle/pmu-metrics](https://github.com/UWHustle/pmu-metrics)
-
 # Fine-grained Hardware Metrics using Intel's PMU
 
 Intel's Performance Monitoring Unit (PMU) is a convenient way to obtain hardware metrics such as cache misses, core cycles, TLB misses, etc. in a lightweight non-intrusive manner. A useful application of PMU metrics is when one wants to benchmark a subsection of code, which is difficult to do with existing tools such as linux_perf, Vtune, etc.
+
+## Credits
+Fork from [UWHustle/pmu-metrics](https://github.com/UWHustle/pmu-metrics)
+
+Modifications made:
+- moved the PMU programming to runtime
+- more dynamic event selection, allowing events to be passed as arguments instead of a config header file
+- allow different events to be tracked in the same execution process (but NOT simultaneously)
 
 ## Setup
 
@@ -17,11 +23,12 @@ For instance, the Intel Xeon Silver 4114 CPU belongs to the skylake microarchite
 
 Use the name in the format `"ARCHITECTURE.EVENT_NAME"` to specify the performance event when initializing the `Metrics` object.
 
-3. Run the `setup.sh` script to program the PMU on the chosen CPU core
+3. Run the `setup.sh` script to enable `rdpmc` and load `msr` kernel modules.
 ```
-$ sudo ./setup.sh -c 1
+$ sudo ./setup.sh
 ```
-`-c` flag specifies the logical core to program. If unspecified, core 1 is programmed by default.
+
+**IMPORTANT** - The setup script contains additional code to program the PMU. This code should be obsolete, since it has been moved to `metrics.cpp` and is executed dynamically at runtime.
 
 ## Usage
 
@@ -62,14 +69,14 @@ int main() {
 }
 ```
 
-**IMPORTANT** - Remember to taskset the process on the programmed core:
+**IMPORTANT** - Remember to taskset the process on the programmed core and execute the program as root to access the PMU.
 ```
-$ taskset -c 1 ./benchmark.out
+$ sudo taskset -c 1 ./benchmark.out
 ```
 
 The program yields the following metrics:
 ```
-$ taskset -c 1 ./benchmark.out
+$ sudo taskset -c 1 ./benchmark.out
 Total time elapsed (ns): 7348051209
 --
 Performance Event                       Count                    
