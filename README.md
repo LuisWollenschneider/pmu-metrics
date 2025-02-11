@@ -21,7 +21,9 @@ For instance, the Intel Xeon Silver 4114 CPU belongs to the skylake microarchite
 
 2. Choose performance events from file `perf_events.h`.
 
-Use the name in the format `"ARCHITECTURE.EVENT_NAME"` to specify the performance event when initializing the `Metrics` object.
+The naming references https://perfmon-events.intel.com/
+
+Use the name in the format `"EVENT_NAME"` to specify the performance event when initializing the `Metrics` object.
 
 3. Run the `setup.sh` script to enable `rdpmc` and load `msr` kernel modules.
 ```
@@ -34,7 +36,7 @@ $ sudo ./setup.sh
 
 Initialize the `Metrics` object with the performance events you want to track.
 
-Format: `"ARCHITECTURE.EVENT_NAME"`
+Format: `"EVENT_NAME"`
 
 Wrap the code you want to benchmark with the helper functions `getMetricsStart`, `getMetricsEnd`, and optionally, `printMetrics`. Here is an example:
 ```cpp
@@ -45,14 +47,14 @@ Wrap the code you want to benchmark with the helper functions `getMetricsStart`,
 
 #include "metrics.h"
 
-#define N 10000000 // 10M
+#define N 1000000 // 1M
 
 using namespace std;
 
 int main() {
 	vector<int> vect(N);
 
-	Metrics m = Metrics({"SKYLAKE.UOPS_RETIRED.MACRO_FUSED"});
+	Metrics m = Metrics({"UOPS_RETIRED.MACRO_FUSED"});
 
 	// Initialize the array with random numbers
 	for (int i=0; i<N; i++) {
@@ -85,5 +87,5 @@ SKYLAKE.UOPS_RETIRED.MACRO_FUSED        3722016
 
 ## Extending the Library
 
-More performance events can readily be added to the library by adding them in the file `perf_events.h` to the `event_names_map` array.
+More performance events can readily be added to the library by adding them in the file `perf_events.h` to the `event_microcode_map` mapping.
 You will need to obtain the eventID and unit mask of the performance event from Chapter 19 of the [Intel Developer's Manual Vol. 3](https://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-system-programming-manual-325384.html).

@@ -19,14 +19,38 @@ unsigned long getTimeDiff(struct timespec start_time, struct timespec end_time) 
 
 
 unsigned long getMetricFromName(std::string event_name) {
-    for (int i=0; i<num_events; i++) {
-        if (std::get<1>(event_names_map[i]) == event_name) {
-            return std::get<0>(event_names_map[i]);
-        }
+    // event_architecture_map get event name
+    if (event_microcode_map.find(event_name) == event_microcode_map.end()) {
+        std::cerr << "Event name '" << event_name << "' not found" << std::endl;
+        exit(1);
+    }
+    std::map<std::string, int> event_map = event_microcode_map.at(event_name);
+
+    std::string microcode = "";
+    std::FILE* file = std::fopen("/sys/devices/cpu/caps/pmu_name", "r");
+    if (file == NULL) {
+        std::cerr << "Error opening /sys/devices/cpu/caps/pmu_name" << std::endl;
+        exit(1);
     }
 
-    std::cerr << "Event name '" << event_name << "' not found" << std::endl;
-    exit(1);
+    char line[256];
+    std::fgets(line, sizeof(line), file);
+    std::fclose(file);
+
+    // upper case
+    for (int i=0; i<sizeof(line); i++) {
+        if (line[i] == '\0' || line[i] == '\n') {
+            break;
+        }
+        microcode += std::toupper(line[i]);
+    }
+
+    if (event_map.find(microcode) == event_map.end()) {
+        std::cerr << "Event name '" << event_name << "' not found for microcode '" << microcode << "'" << std::endl;
+        exit(1);
+    }
+
+    return event_map.at(microcode);
 }
 
 bool metrics_in_use = false;

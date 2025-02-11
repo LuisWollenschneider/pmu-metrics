@@ -16,24 +16,42 @@
 
 #include "perf_events.h"
 
-typedef std::tuple<unsigned long, std::string> event_name_tuple_t;
-
 /*
- * Map of event IDs to event names.
- * (event_id, event_name)
+ * Microcode & Performance Counter Event mapping
+ *
+ * EventName -> MicroCode -> EventID
  * 
- * event_id: (EventSel << 8) | Umask
- * event_name format: "ARCHITECTURE.EVENT_NAME"
+ * EventID: (EventSel << 8) | Umask
  * 
  * Referenced from:
  * https://perfmon-events.intel.com/
- */
-const event_name_tuple_t event_names_map[] = {
-	event_name_tuple_t(0xC204, "SKYLAKE.UOPS_RETIRED.MACRO_FUSED"),
-	event_name_tuple_t(0xC202, "SKYLAKE.UOPS_RETIRED.RETIRE_SLOTS"),
-	event_name_tuple_t(0xD101, "SKYLAKE.MEM_LOAD_RETIRED.L1_HIT"),
+*/
+const std::map<std::string, std::map<std::string, int>> event_microcode_map = {
+	{"MACHINE_CLEARS.COUNT", {
+		{"ICE_LAKE", 0xC301},
+		{"RAPTOR_LAKE", 0xC301},
+		{"ADLER_LAKE", 0xC301},
+		{"EMERALD_RAPIDS", 0xC301}
+	}},
+	{"MEM_LOAD_RETIRED.L1_HIT", {
+		{"SKYLAKE", 0xD101}
+	}},
+	{"UOPS_ISSUED.ANY", {
+		{"ICE_LAKE", 0x0E01},
+		{"TREMONT", 0x0E00},
+		{"EMERALD_RAPIDS", 0xAE01}
+	}},
+	{"UOPS_RETIRED.ALL", {
+		{"RAPTOR_LAKE", 0xC200},
+		{"ADLER_LAKE", 0xC200},
+		{"TREMONT", 0xC200}
+	}},
+	{"UOPS_RETIRED.MACRO_FUSED", {
+		{"SKYLAKE", 0xC204}
+	}},
+	{"UOPS_RETIRED.RETIRE_SLOTS", {
+		{"SKYLAKE", 0xC202}
+	}},
 };
-
-const int num_events = sizeof(event_names_map) / sizeof(event_name_tuple_t);
 
 #endif // __PERF_EVENTS__

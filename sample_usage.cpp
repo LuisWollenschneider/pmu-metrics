@@ -19,7 +19,7 @@ using namespace std;
 void runTest() {
 	vector<int> vect(N);
 
-	Metrics m = Metrics({"SKYLAKE.UOPS_RETIRED.MACRO_FUSED"});
+	Metrics m = Metrics({"UOPS_RETIRED.MACRO_FUSED"});
 
 	// Initialize the array with random numbers
 	for (int i=0; i<N; i++) {
